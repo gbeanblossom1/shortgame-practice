@@ -1,0 +1,29 @@
+body{
+  font-family:system-ui;
+  background:#0b3d2e;
+  color:white;
+}
+
+.container{
+  max-width:400px;
+  margin:auto;
+  padding:20px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:none;
+  background:#1faa59;
+  color:white;
+  font-size:16px;
+}
+
+input,select{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:6px;
+}
