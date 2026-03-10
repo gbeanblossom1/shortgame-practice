@@ -1,47 +1,91 @@
-const lieWeights = {
-  fairway: 0.40,
-  rough: 0.48,
-  bunker: 0.12
-};
+const shotCatalog = [
+  // Fringe / fairway baseline
+  { lie: "fringe", yards: 5, weight: 3.5 },
+  { lie: "fairway", yards: 8, weight: 3.2 },
+  { lie: "fairway", yards: 10, weight: 2.8 },
+  { lie: "fairway", yards: 12, weight: 2.5 },
+  { lie: "fairway", yards: 15, weight: 2.2 },
+  { lie: "fairway", yards: 18, weight: 1.8 },
+  { lie: "fairway", yards: 20, weight: 1.6 },
+  { lie: "fairway", yards: 25, weight: 1.4 },
+  { lie: "fairway", yards: 30, weight: 1.2 },
+  { lie: "fairway", yards: 35, weight: 0.9 },
 
-const distanceWeights = [
-  { range: [1, 5], weight: 0.20 },
-  { range: [6, 10], weight: 0.25 },
-  { range: [11, 20], weight: 0.25 },
-  { range: [21, 30], weight: 0.20 },
-  { range: [31, 50], weight: 0.10 }
+  // Rough baseline
+  { lie: "rough", yards: 6, weight: 3.0 },
+  { lie: "rough", yards: 8, weight: 3.2 },
+  { lie: "rough", yards: 10, weight: 2.8 },
+  { lie: "rough", yards: 12, weight: 2.4 },
+  { lie: "rough", yards: 15, weight: 2.1 },
+  { lie: "rough", yards: 18, weight: 1.7 },
+  { lie: "rough", yards: 20, weight: 1.5 },
+  { lie: "rough", yards: 25, weight: 1.2 },
+  { lie: "rough", yards: 30, weight: 1.0 },
+  { lie: "rough", yards: 40, weight: 0.7 },
+
+  // Greenside bunker baseline
+  { lie: "bunker", yards: 4, weight: 0.8 },
+  { lie: "bunker", yards: 6, weight: 1.2 },
+  { lie: "bunker", yards: 8, weight: 2.0 },
+  { lie: "bunker", yards: 10, weight: 2.2 },
+  { lie: "bunker", yards: 12, weight: 2.0 },
+  { lie: "bunker", yards: 15, weight: 1.6 },
+  { lie: "bunker", yards: 18, weight: 1.2 },
+  { lie: "bunker", yards: 20, weight: 1.0 },
+  { lie: "bunker", yards: 25, weight: 0.7 },
+  { lie: "bunker", yards: 30, weight: 0.5 },
+
+  // Pitches, mapped into fairway / rough only, capped at 50
+  { lie: "fairway", yards: 20, weight: 1.8 },
+  { lie: "fairway", yards: 25, weight: 1.6 },
+  { lie: "fairway", yards: 30, weight: 1.5 },
+  { lie: "rough", yards: 35, weight: 1.4 },
+  { lie: "fairway", yards: 40, weight: 1.8 },
+  { lie: "fairway", yards: 45, weight: 1.6 },
+  { lie: "fairway", yards: 50, weight: 2.0 },
+
+  // Flop-like baseline, represented as lie + distance
+  { lie: "fairway", yards: 8, weight: 0.8 },
+  { lie: "rough", yards: 10, weight: 0.9 },
+  { lie: "rough", yards: 12, weight: 0.8 },
+  { lie: "fairway", yards: 15, weight: 0.7 },
+  { lie: "fairway", yards: 20, weight: 0.5 },
+
+  // Bump-and-run / specialty / fringe-putt baseline
+  { lie: "fairway", yards: 10, weight: 1.8 },
+  { lie: "fairway", yards: 15, weight: 1.6 },
+  { lie: "fairway", yards: 20, weight: 1.3 },
+  { lie: "fringe", yards: 8, weight: 2.5 },
+  { lie: "fringe", yards: 12, weight: 2.0 }
 ];
 
-function weightedChoice(weights) {
-  const r = Math.random();
-  let total = 0;
-  for (const key in weights) {
-    total += weights[key];
-    if (r <= total) return key;
+function weightedChoice(items) {
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  const r = Math.random() * totalWeight;
+
+  let running = 0;
+  for (const item of items) {
+    running += item.weight;
+    if (r <= running) return item;
   }
-  return "rough";
+
+  return items[items.length - 1];
 }
 
-function randomDistance() {
-  const r = Math.random();
-  let total = 0;
-  for (const d of distanceWeights) {
-    total += d.weight;
-    if (r <= total) {
-      const [min, max] = d.range;
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-  }
-  return 15;
-}
+export function generateRound({ maxDistance = 50, availableLies = ["fringe", "fairway", "rough", "bunker"] }) {
+  const filteredShots = shotCatalog.filter(
+    (shot) => availableLies.includes(shot.lie) && shot.yards <= maxDistance
+  );
 
-export function generateRound() {
-  const holes = [];
-  for (let i = 0; i < 18; i++) {
-    holes.push({
-      lie: weightedChoice(lieWeights),
-      yards: randomDistance()
-    });
+  if (filteredShots.length === 0) {
+    throw new Error("No valid shots available for the selected session setup.");
   }
-  return holes;
+
+  return Array.from({ length: 18 }, () => {
+    const shot = weightedChoice(filteredShots);
+    return {
+      lie: shot.lie,
+      yards: shot.yards
+    };
+  });
 }
