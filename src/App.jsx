@@ -102,7 +102,7 @@ export default function App() {
     return (
       <div className="container">
         <h1>Short Game Practice</h1>
-        <p className="subtle">Benchmark: PGA Tour public baseline</p>
+        <p className="subtle">Benchmark: PGA Tour style public baseline</p>
         <button onClick={startRound}>Start 18 Hole Round</button>
 
         {results.length > 0 && (
@@ -154,7 +154,8 @@ export default function App() {
               value={offGreenLie}
               onChange={(e) => setOffGreenLie(e.target.value)}
             >
-              <option value="fairway">Fairway / Fringe</option>
+              <option value="fringe">Fringe</option>
+              <option value="fairway">Fairway</option>
               <option value="rough">Rough</option>
               <option value="bunker">Bunker</option>
             </select>
