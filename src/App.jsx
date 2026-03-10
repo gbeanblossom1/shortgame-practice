@@ -6,6 +6,8 @@ import {
   calcStrokesGainedOnGreen
 } from "./sgUtils";
 
+const ALL_LIES = ["fringe", "fairway", "rough", "bunker"];
+
 export default function App() {
   const [round, setRound] = useState(null);
   const [current, setCurrent] = useState(0);
@@ -16,21 +18,44 @@ export default function App() {
   const [totalSG, setTotalSG] = useState(0);
   const [results, setResults] = useState([]);
 
+  const [maxDistance, setMaxDistance] = useState(50);
+  const [availableLies, setAvailableLies] = useState(["fringe", "fairway", "rough", "bunker"]);
+
+  function toggleLie(lie) {
+    setAvailableLies((prev) =>
+      prev.includes(lie) ? prev.filter((x) => x !== lie) : [...prev, lie]
+    );
+  }
+
   function startRound() {
-    setRound(generateRound());
-    setCurrent(0);
-    setLeave("");
-    setIsOffGreen(false);
-    setOffGreenLie("rough");
-    setOffGreenYards("");
-    setTotalSG(0);
-    setResults([]);
+    if (availableLies.length === 0) {
+      alert("Select at least one available lie.");
+      return;
+    }
+
+    try {
+      const newRound = generateRound({
+        maxDistance: Number(maxDistance),
+        availableLies
+      });
+
+      setRound(newRound);
+      setCurrent(0);
+      setLeave("");
+      setIsOffGreen(false);
+      setOffGreenLie(availableLies.includes("rough") ? "rough" : availableLies[0]);
+      setOffGreenYards("");
+      setTotalSG(0);
+      setResults([]);
+    } catch (err) {
+      alert(err.message);
+    }
   }
 
   function resetInputs() {
     setLeave("");
     setIsOffGreen(false);
-    setOffGreenLie("rough");
+    setOffGreenLie(availableLies.includes("rough") ? "rough" : availableLies[0] || "rough");
     setOffGreenYards("");
   }
 
@@ -43,6 +68,7 @@ export default function App() {
 
     if (isOffGreen) {
       const nextYards = Number(offGreenYards);
+
       if (!nextYards || nextYards <= 0) {
         alert("Enter the remaining off-green distance in yards.");
         return;
@@ -103,7 +129,37 @@ export default function App() {
       <div className="container">
         <h1>Short Game Practice</h1>
         <p className="subtle">Benchmark: PGA Tour style public baseline</p>
-        <button onClick={startRound}>Start 18 Hole Round</button>
+
+        <div className="card">
+          <h3>Session Setup</h3>
+
+          <label className="label">Max practice distance (yards)</label>
+          <select
+            value={maxDistance}
+            onChange={(e) => setMaxDistance(Number(e.target.value))}
+          >
+            <option value={20}>20</option>
+            <option value={30}>30</option>
+            <option value={40}>40</option>
+            <option value={50}>50</option>
+          </select>
+
+          <label className="label">Available lies</label>
+          <div className="lie-grid">
+            {ALL_LIES.map((lie) => (
+              <label key={lie} className="lie-option">
+                <input
+                  type="checkbox"
+                  checked={availableLies.includes(lie)}
+                  onChange={() => toggleLie(lie)}
+                />
+                <span>{lie}</span>
+              </label>
+            ))}
+          </div>
+
+          <button onClick={startRound}>Start 18 Hole Round</button>
+        </div>
 
         {results.length > 0 && (
           <div className="summary-card">
@@ -154,10 +210,11 @@ export default function App() {
               value={offGreenLie}
               onChange={(e) => setOffGreenLie(e.target.value)}
             >
-              <option value="fringe">Fringe</option>
-              <option value="fairway">Fairway</option>
-              <option value="rough">Rough</option>
-              <option value="bunker">Bunker</option>
+              {availableLies.map((lie) => (
+                <option key={lie} value={lie}>
+                  {lie.charAt(0).toUpperCase() + lie.slice(1)}
+                </option>
+              ))}
             </select>
 
             <label className="label">Remaining distance (yards)</label>
